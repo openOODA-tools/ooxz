@@ -48,9 +48,19 @@ jobs:
         run: |
           if ! command -v xz >/dev/null 2>&1; then
             sudo apt-get update -qq
-            sudo apt-get install -y -qq xz
+            sudo apt-get install -y -qq xz-utils
           fi
-          command -v xz >/dev/null 2>&1 || { echo "::error::the upstream tool xz is required for the parity gate"; exit 1; }
+          if ! command -v xz >/dev/null 2>&1; then
+            for cand in xz ; do
+              for d in /usr/local/bin /usr/games /usr/bin /bin /usr/sbin /sbin; do
+                if [ -x "$d/$cand" ]; then
+                  sudo ln -sf "$d/$cand" /usr/local/bin/xz
+                  break 2;
+                fi
+              done
+            done
+          fi
+          command -v xz >/dev/null 2>&1 || { echo "::error::the upstream tool xz is required for the parity gate and the package xz-utils does not put it on this runner"; exit 1; }
 
       - name: Build, verify, and test
         working-directory: ${{ github.workspace }}/ooxz
